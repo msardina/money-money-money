@@ -15,12 +15,19 @@ small_font = pygame.font.SysFont("comicsans", 45, True)
 medium_font = pygame.font.SysFont("comicsans", 50, True)
 big_font = pygame.font.SysFont("comicsans", 70, True)
 
+ALL_BARS = ["Shop", "Job", "Casino"]
+TITLE_TEXT = [
+    small_font.render(text_content, True, (0, 0, 0)) for text_content in ALL_BARS
+]
+
+
 # load images
 dollar_img = pygame.image.load(os.path.join("assets", "dollar.svg"))
 base_button_img = pygame.image.load(os.path.join("assets", "base_button.svg"))
 
 # colors
 WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 # setup a clock
 clock = pygame.time.Clock()
 FPS = 60
@@ -87,9 +94,74 @@ class Button:
         return self.clicked
 
 
-def game():
+def draw_text_bar(title_text, ypos, state, screen):
+    pygame.draw.line(screen, BLACK, (0, ypos), (WIDTH, ypos), 5)
+    block_width = WIDTH / (len(title_text))
+    new_state = state
+    for i, text in enumerate(title_text):
+        rect = pygame.Rect(block_width * i, 0, block_width, ypos)
+        # draw text and line
+        screen.blit(
+            text, ((block_width * i + block_width / 2) - text.get_width() / 2, -12)
+        )
+        pygame.draw.line(
+            screen, BLACK, (block_width * i, 0), (block_width * i, ypos), 5
+        )
+
+        # draw white part
+        if ALL_BARS[i] == state:
+            pygame.draw.line(
+                screen,
+                WHITE,
+                (block_width * i + 2.5, ypos),
+                (block_width * (i + 1) - 2.5, ypos),
+                5,
+            )
+        pygame.draw.line(screen, BLACK, (0, 0), (0, HEIGHT), 5)
+        pygame.draw.line(screen, BLACK, (WIDTH - 2.5, 0), (WIDTH - 2.5, HEIGHT), 5)
+        # check for click
+        pos = pygame.mouse.get_pos()
+        if rect.collidepoint(pos) and pygame.mouse.get_pressed()[0] == 1:
+            new_state = ALL_BARS[i]
+
+    return new_state
+
+
+def draw_job(earn_button):
+    global money
+    # render text
+    score_text = big_font.render(f"{money}", True, (0, 0, 0))
+    income_text = extra_small_font.render(f"Income: +{income}", True, (0, 0, 0))
+
+    # draw
+    screen.blit(
+        dollar_img,
+        (
+            WIDTH / 2 - score_text.get_width() / 2 - dollar_img.get_width(),
+            HEIGHT / 4 + 30,
+        ),
+    )
+    screen.blit(score_text, (WIDTH / 2 - score_text.get_width() / 2, HEIGHT / 4))
+    earn_button.update("Earn")
+    screen.blit(
+        income_text,
+        (
+            earn_button.x
+            + base_button_img.get_width() / 2
+            - income_text.get_width() / 2,
+            earn_button.y + base_button_img.get_height(),
+        ),
+    )
+
+    # check for button click
+    if earn_button.is_clicked():
+        money += income
+
+
+def main():
     # variables
     run = True
+    state = "Job"
     global money
     global income
 
@@ -109,32 +181,16 @@ def game():
                 run = False
                 pygame.quit()
                 quit()
-        # render text
-        score_text = big_font.render(f"{money}", True, (0, 0, 0))
-        income_text = extra_small_font.render(f"Income: +{income}", True, (0, 0, 0))
+
         # draw
         screen.fill(WHITE)
-        screen.blit(
-            dollar_img,
-            (
-                WIDTH / 2 - score_text.get_width() / 2 - dollar_img.get_width(),
-                HEIGHT / 4 + 30,
-            ),
-        )
-        screen.blit(score_text, (WIDTH / 2 - score_text.get_width() / 2, HEIGHT / 4))
-        earn_button.update("Earn")
-        screen.blit(
-            income_text,
-            (
-                earn_button.x
-                + base_button_img.get_width() / 2
-                - income_text.get_width() / 2,
-                earn_button.y + base_button_img.get_height(),
-            ),
-        )
+        if state == "Job":
+            draw_job(earn_button)
 
-        if earn_button.is_clicked():
-            money += income
+        # draw tpo bar
+        draw_text_bar(TITLE_TEXT, 55, state, screen)
+        state = draw_text_bar(TITLE_TEXT, 55, state, screen)
+
         # update
         pygame.display.update()
         clock.tick(FPS)
@@ -143,4 +199,4 @@ def game():
 # run game
 
 if __name__ == "__main__":
-    game()
+    main()
