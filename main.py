@@ -2,6 +2,7 @@ import pygame
 from pygame import mixer
 import os
 import time
+import random
 
 pygame.init()
 mixer.init()
@@ -162,15 +163,60 @@ def draw_job(earn_button):
         money += income
 
 
+def draw_casino(bet_button, numbers, betting):
+
+    # draw boxes
+    box_width = 100
+    for i in range(1, 4):
+        pygame.draw.rect(
+            screen,
+            BLACK,
+            (box_width * i, HEIGHT / 4, box_width, box_width),
+            5,
+        )
+    # draw numbers
+    for i, number in enumerate(numbers):
+        number_text = big_font.render(number, True, (0, 0, 0))
+        screen.blit(
+            number_text,
+            (
+                box_width * (i + 1) + box_width / 2 - number_text.get_width() / 2,
+                HEIGHT / 4,
+            ),
+        )
+    # draw buttons
+    bet_button.update("Bet")
+
+    # random bet
+
+    if bet_button.is_clicked() and not betting:
+        betting = True
+    if betting:
+        for i in range(0, len(numbers)):
+            numbers[i] = str(random.randint(0, 9))
+    if betting:
+        return True
+    return False
+
+
 def main():
     # variables
     run = True
     state = "Job"
     global money
     global income
+    numbers = ["0", "0", "0"]
+    betting = False
+    bet_timer = 0
 
     # objects
     earn_button = Button(
+        WIDTH / 2 - base_button_img.get_width() / 2,
+        HEIGHT / 2,
+        base_button_img,
+        base_button_img,
+    )
+    bet_button = Button(
         WIDTH / 2 - base_button_img.get_width() / 2,
         HEIGHT / 2,
         base_button_img,
@@ -190,9 +236,15 @@ def main():
         screen.fill(WHITE)
         if state == "Job":
             draw_job(earn_button)
+        if state == "Casino":
+            betting = draw_casino(bet_button, numbers, betting)
+        if betting:
+            bet_timer += 0.010
 
+        if bet_timer > 2:
+            betting = False
+            bet_timer = 0
         # draw tpo bar
-        draw_text_bar(TITLE_TEXT, 55, state, screen)
         state = draw_text_bar(TITLE_TEXT, 55, state, screen)
 
         # update
