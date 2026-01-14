@@ -163,7 +163,7 @@ def draw_job(earn_button):
         money += income
 
 
-def draw_casino(bet_button, numbers, betting):
+def draw_casino(bet_button, numbers, betting, amount, win_loss_text):
 
     # draw boxes
     box_width = 100
@@ -187,6 +187,26 @@ def draw_casino(bet_button, numbers, betting):
     # draw buttons
     bet_button.update("Bet")
 
+    # enter money amount
+    amount_text = medium_font.render(amount, True, (0, 0, 0))
+    win_loss = extra_small_font.render(win_loss_text, True, (0, 0, 0))
+    screen.blit(
+        amount_text,
+        (
+            WIDTH / 2 - amount_text.get_width() / 2,
+            HEIGHT / 2 - amount_text.get_height() - 10,
+        ),
+    )
+    screen.blit(
+        dollar_img,
+        (
+            WIDTH / 2 - amount_text.get_width() / 2 - 35,
+            HEIGHT / 2 - amount_text.get_height(),
+        ),
+    )
+    screen.blit(
+        win_loss, (bet_button.x, bet_button.y + base_button_img.get_height() + 2)
+    )
     # random bet
 
     if bet_button.is_clicked() and not betting:
@@ -194,9 +214,9 @@ def draw_casino(bet_button, numbers, betting):
     if betting:
         for i in range(0, len(numbers)):
             numbers[i] = str(random.randint(0, 9))
-    if betting:
-        return True
-    return False
+
+    # check for victory
+    return betting, numbers
 
 
 def main():
@@ -208,7 +228,8 @@ def main():
     numbers = ["0", "0", "0"]
     betting = False
     bet_timer = 0
-
+    bet_amount = "0"
+    win_loss_text = "make a bet!"
     # objects
     earn_button = Button(
         WIDTH / 2 - base_button_img.get_width() / 2,
@@ -232,18 +253,40 @@ def main():
                 pygame.quit()
                 quit()
 
+            if event.type == pygame.TEXTINPUT:
+                bet_amount += event.text
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_BACKSPACE:
+                    bet_amount = bet_amount[:-1]
+
         # draw
         screen.fill(WHITE)
         if state == "Job":
             draw_job(earn_button)
         if state == "Casino":
-            betting = draw_casino(bet_button, numbers, betting)
+            betting_numbers = draw_casino(
+                bet_button, numbers, betting, bet_amount, win_loss_text
+            )
+            betting = betting_numbers[0]
+            numbers = betting_numbers[1]
+
         if betting:
             bet_timer += 0.010
-
         if bet_timer > 2:
             betting = False
             bet_timer = 0
+            unique_numbers = set(numbers)
+            # check victory
+            if len(unique_numbers) != len(numbers):
+                money += int(bet_amount) * 3
+                win_loss_text = "Lucky! x3"
+            elif numbers[0] == numbers[1] == numbers[2]:
+                money += int(bet_amount) * 21
+                win_loss_text = "ARE U HACKING? x21"
+            else:
+                money -= int(bet_amount)
+                win_loss_text = "Oopsies. Try again. Sorry!"
+
         # draw tpo bar
         state = draw_text_bar(TITLE_TEXT, 55, state, screen)
 
