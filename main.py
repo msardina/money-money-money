@@ -8,8 +8,9 @@ mixer.init()
 
 # begin
 money = 0
-
+income = 1
 # setup font
+extra_small_font = pygame.font.SysFont("comicsans", 20, True)
 small_font = pygame.font.SysFont("comicsans", 45, True)
 medium_font = pygame.font.SysFont("comicsans", 50, True)
 big_font = pygame.font.SysFont("comicsans", 70, True)
@@ -25,7 +26,7 @@ clock = pygame.time.Clock()
 FPS = 60
 
 # setup screen
-WIDTH, HEIGHT = 600, 800
+WIDTH, HEIGHT = 500, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("MONEY MONEY MONEY")
 
@@ -90,6 +91,7 @@ def game():
     # variables
     run = True
     global money
+    global income
 
     # objects
     earn_button = Button(
@@ -109,6 +111,7 @@ def game():
                 quit()
         # render text
         score_text = big_font.render(f"{money}", True, (0, 0, 0))
+        income_text = extra_small_font.render(f"Income: +{income}", True, (0, 0, 0))
         # draw
         screen.fill(WHITE)
         screen.blit(
@@ -120,9 +123,18 @@ def game():
         )
         screen.blit(score_text, (WIDTH / 2 - score_text.get_width() / 2, HEIGHT / 4))
         earn_button.update("Earn")
+        screen.blit(
+            income_text,
+            (
+                earn_button.x
+                + base_button_img.get_width() / 2
+                - income_text.get_width() / 2,
+                earn_button.y + base_button_img.get_height(),
+            ),
+        )
 
         if earn_button.is_clicked():
-            money += 1
+            money += income
         # update
         pygame.display.update()
         clock.tick(FPS)
