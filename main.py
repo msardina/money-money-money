@@ -95,6 +95,11 @@ class Button:
 
 
 def draw_text_bar(title_text, ypos, state, screen):
+    # boarder
+    pygame.draw.line(screen, BLACK, (0, 0), (0, HEIGHT), 5)
+    pygame.draw.line(screen, BLACK, (WIDTH - 2.5, 0), (WIDTH - 2.5, HEIGHT), 5)
+    pygame.draw.line(screen, BLACK, (0, HEIGHT - 2.5), (WIDTH, HEIGHT - 2.5), 5)
+    pygame.draw.line(screen, BLACK, (0, 0), (WIDTH, 0), 5)
     pygame.draw.line(screen, BLACK, (0, ypos), (WIDTH, ypos), 5)
     block_width = WIDTH / (len(title_text))
     new_state = state
@@ -117,8 +122,7 @@ def draw_text_bar(title_text, ypos, state, screen):
                 (block_width * (i + 1) - 2.5, ypos),
                 5,
             )
-        pygame.draw.line(screen, BLACK, (0, 0), (0, HEIGHT), 5)
-        pygame.draw.line(screen, BLACK, (WIDTH - 2.5, 0), (WIDTH - 2.5, HEIGHT), 5)
+
         # check for click
         pos = pygame.mouse.get_pos()
         if rect.collidepoint(pos) and pygame.mouse.get_pressed()[0] == 1:
