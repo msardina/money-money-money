@@ -254,7 +254,9 @@ def main():
                 quit()
 
             if event.type == pygame.TEXTINPUT:
-                bet_amount += event.text
+
+                if event.text in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+                    bet_amount += event.text
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_BACKSPACE:
                     bet_amount = bet_amount[:-1]
@@ -278,9 +280,11 @@ def main():
             unique_numbers = set(numbers)
             # check victory
             if len(unique_numbers) != len(numbers):
+                money -= int(bet_amount)
                 money += int(bet_amount) * 3
                 win_loss_text = "Lucky! x3"
             elif numbers[0] == numbers[1] == numbers[2]:
+                money -= int(bet_amount)
                 money += int(bet_amount) * 21
                 win_loss_text = "ARE U HACKING? x21"
             else:
