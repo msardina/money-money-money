@@ -228,7 +228,7 @@ def main():
     numbers = ["0", "0", "0"]
     betting = False
     bet_timer = 0
-    bet_amount = "0"
+    bet_amount = "100"
     win_loss_text = "make a bet!"
     # objects
     earn_button = Button(
