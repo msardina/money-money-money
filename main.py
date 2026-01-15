@@ -21,7 +21,8 @@ TITLE_TEXT = [
     SMALL_FONT.render(text_content, True, (0, 0, 0)) for text_content in ALL_BARS
 ]
 
-
+# income dic
+income_rarity = {0: 1, 1: 3, 2: 50, 3: 100, 4: 500, 5: 1000}
 # colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -406,13 +407,14 @@ def main():
         if buying_egg:
             state = "Egg Open"
             money -= egg_price
-            egg_price *= 2
+            egg_price *= 4
 
         if not state == "Egg Open":
             # draw tpo bar
             state = draw_text_bar(TITLE_TEXT, 55, state, screen)
 
         if open_chances == 0:
+            income += income_rarity[rarity_num]
             state = "Shop"
             open_chances = 5
             rarity_num = 0
