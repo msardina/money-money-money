@@ -109,20 +109,6 @@ class Button:
         )
 
     def is_clicked(self):
-        pressed = pygame.mouse.get_pressed()[0] == 1
-        clicking = self.hovering and pressed and self.enabled
-
-        if self.text == "buy" and pressed:
-            print(self.enabled)
-
-            # print(
-            #     self.hovering,
-            #     pressed,
-            #     self.enabled,
-            #     "====>",
-            #     clicking,
-            # )
-
         return self.clicked
 
 
@@ -366,6 +352,7 @@ def main():
 
         if buying_egg:
             money -= egg_price
+            egg_price *= 2
         # draw tpo bar
         state = draw_text_bar(TITLE_TEXT, 55, state, screen)
 
