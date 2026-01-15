@@ -428,7 +428,7 @@ def main():
             elif egg_price < 10000000:
                 egg_price *= 2
             elif egg_price < 100000000:
-                egg_price *= 1.2
+                egg_price = round(egg_price * 1.2)
             else:
                 egg_price = egg_price
 
