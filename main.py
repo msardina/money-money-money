@@ -126,7 +126,6 @@ class Button:
 
 
 def draw_egg_opening(rarity_num, chances_left):
-    print(rarity_num)
     screen.blit(egg_imgs_back[rarity_num], (0, 0))
     screen.blit(
         egg_imgs[rarity_num],
