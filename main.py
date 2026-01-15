@@ -22,7 +22,7 @@ TITLE_TEXT = [
 ]
 
 # income dic
-income_rarity = {0: 1, 1: 3, 2: 50, 3: 100, 4: 500, 5: 1000}
+income_rarity = {0: 1, 1: 3, 2: 50, 3: 100, 4: 500, 5: 1000, 6: 10000}
 # colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -126,6 +126,7 @@ class Button:
 
 
 def draw_egg_opening(rarity_num, chances_left):
+    print(rarity_num)
     screen.blit(egg_imgs_back[rarity_num], (0, 0))
     screen.blit(
         egg_imgs[rarity_num],
@@ -347,6 +348,7 @@ def main():
         base_button_hover_img,
         False,
     )
+    eggs_since_good_reward = 0
     # main loop
     while run:
 
@@ -359,7 +361,9 @@ def main():
 
             if state == "Egg Open":
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if random.randint(0, 100) < 51:
+                    if eggs_since_good_reward > 5:
+                        rarity_num += 1
+                    elif random.randint(0, 100) < 51:
                         rarity_num += 1
                     open_chances -= 1
             if event.type == pygame.TEXTINPUT:
@@ -369,7 +373,19 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_BACKSPACE:
                     bet_amount = bet_amount[:-1]
+        if open_chances == 0:
 
+            if rarity_num < 5:
+                eggs_since_good_reward += 1
+            else:
+                eggs_since_good_reward = 0
+            if rarity_num > 0:
+                income += income_rarity[rarity_num - 1]
+            else:
+                income += income_rarity[rarity_num]
+            state = "Shop"
+            open_chances = 6
+            rarity_num = 0
         # draw
         screen.fill(WHITE)
         if state == "Job":
@@ -407,17 +423,20 @@ def main():
         if buying_egg:
             state = "Egg Open"
             money -= egg_price
-            egg_price *= 4
+
+            if egg_price < 10000:
+                egg_price *= 4
+            elif egg_price < 10000000:
+                egg_price *= 2
+            elif egg_price < 100000000:
+                egg_price *= 1.2
+            else:
+                egg_price = egg_price
 
         if not state == "Egg Open":
             # draw tpo bar
             state = draw_text_bar(TITLE_TEXT, 55, state, screen)
 
-        if open_chances == 0:
-            income += income_rarity[rarity_num]
-            state = "Shop"
-            open_chances = 6
-            rarity_num = 0
         # update
         pygame.display.update()
         clock.tick(FPS)
