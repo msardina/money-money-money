@@ -416,7 +416,7 @@ def main():
         if open_chances == 0:
             income += income_rarity[rarity_num]
             state = "Shop"
-            open_chances = 5
+            open_chances = 6
             rarity_num = 0
         # update
         pygame.display.update()
