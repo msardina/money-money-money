@@ -11,20 +11,16 @@ mixer.init()
 money = 0
 income = 1
 # setup font
-extra_small_font = pygame.font.SysFont("comicsans", 20, True)
-small_font = pygame.font.SysFont("comicsans", 45, True)
-medium_font = pygame.font.SysFont("comicsans", 50, True)
-big_font = pygame.font.SysFont("comicsans", 70, True)
+EXTRA_SMALL_FONT = pygame.font.SysFont("comicsans", 20, True)
+SMALL_FONT = pygame.font.SysFont("comicsans", 45, True)
+MEDIUM_FONT = pygame.font.SysFont("comicsans", 50, True)
+BIG_FONT = pygame.font.SysFont("comicsans", 70, True)
 
 ALL_BARS = ["Shop", "Job", "Casino"]
 TITLE_TEXT = [
-    small_font.render(text_content, True, (0, 0, 0)) for text_content in ALL_BARS
+    SMALL_FONT.render(text_content, True, (0, 0, 0)) for text_content in ALL_BARS
 ]
 
-
-# load images
-dollar_img = pygame.image.load(os.path.join("assets", "dollar.svg"))
-base_button_img = pygame.image.load(os.path.join("assets", "base_button.svg"))
 
 # colors
 WHITE = (255, 255, 255)
@@ -38,11 +34,21 @@ WIDTH, HEIGHT = 500, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("MONEY MONEY MONEY")
 
+# load images
+shop_egg = pygame.image.load(os.path.join("assets", "lucky_egg.svg"))
+dollar_img = pygame.image.load(os.path.join("assets", "dollar.svg"))
+base_button_img = pygame.image.load(os.path.join("assets", "base_button.svg"))
+base_button_hover_img = pygame.image.load(
+    os.path.join("assets", "base_button_hover.svg")
+)
+loot_table = pygame.image.load(os.path.join("assets", "loot_table.png"))
+loot_table = pygame.transform.scale(loot_table, (WIDTH, loot_table.get_height()))
+
 
 # class
 class Button:
-    def __init__(self, x, y, base_img, hover_base):
-        self.clicked = False
+    def __init__(self, x, y, base_img, hover_base, is_continues):
+        self.continues = is_continues
         self.x = x
         self.y = y
         self.img = base_img
@@ -51,19 +57,37 @@ class Button:
         self.height = self.img.get_height()
         self.normal_img = base_img
         self.hover_img = hover_base
+        self.text = ""
         self.render = None
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.enabled = True
+        self.clicked = True  # was clicked in last cycle
 
-    def update(self, text):
-
-        pos = pygame.mouse.get_pos()
-
+    def update_status(self):
         # Change State
-        if self.rect.collidepoint(pos):
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
             self.hovering = True
         else:
             self.hovering = False
-            self.clicked = False
+
+        pressed = pygame.mouse.get_pressed()[0] == 1
+        self.clicked = (
+            (self.continues or not self.clicked)
+            and self.hovering
+            and pressed
+            and self.enabled
+        )
+        if self.continues:
+            self.enabled = True
+        else:
+            self.enabled = (
+                not self.enabled and (not self.hovering or not pressed)
+            ) or (self.enabled and not (self.hovering and pressed))
+
+    def update(self, text, size_font):
+        # status
+        self.update_status()
+        self.text = text
 
         # Change Img using State
         self.img = self.hover_img if self.hovering else self.normal_img
@@ -74,14 +98,7 @@ class Button:
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 
         # if hovering, check if press
-        if self.hovering:
-            # left button clicked
-            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
-                self.clicked = True
-
-            if pygame.mouse.get_pressed()[0] == 0:
-                self.clicked = False
-        self.render = small_font.render(text, True, (0, 0, 0))
+        self.render = size_font.render(self.text, True, (0, 0, 0))
         screen.blit(self.img, (self.x, self.y))
         screen.blit(
             self.render,
@@ -92,7 +109,50 @@ class Button:
         )
 
     def is_clicked(self):
+        pressed = pygame.mouse.get_pressed()[0] == 1
+        clicking = self.hovering and pressed and self.enabled
+
+        if self.text == "buy" and pressed:
+            print(self.enabled)
+
+            # print(
+            #     self.hovering,
+            #     pressed,
+            #     self.enabled,
+            #     "====>",
+            #     clicking,
+            # )
+
         return self.clicked
+
+
+def draw_shop(buy_egg_button: Button, egg_price, money):
+    # draw buy egg
+    egg_price_text = MEDIUM_FONT.render(f"{egg_price}", True, (0, 0, 0))
+    screen.blit(egg_price_text, (WIDTH / 2 - egg_price_text.get_width() / 2, 90))
+    screen.blit(loot_table, (0, HEIGHT - loot_table.get_height()))
+    # draw egg
+    screen.blit(
+        shop_egg,
+        (
+            WIDTH / 2 - shop_egg.get_width() / 2,
+            HEIGHT / 2 - shop_egg.get_height() / 2 - 100,
+        ),
+    )
+    screen.blit(
+        dollar_img,
+        (WIDTH / 2 - egg_price_text.get_width() / 2 - dollar_img.get_width(), 100),
+    )
+
+    if egg_price <= money:
+        buy_egg_button.update("buy", MEDIUM_FONT)
+        if buy_egg_button.is_clicked():
+            return True
+        else:
+            return False
+    else:
+        buy_egg_button.update("cant afford", EXTRA_SMALL_FONT)
+        return False
 
 
 def draw_text_bar(title_text, ypos, state, screen):
@@ -135,8 +195,8 @@ def draw_text_bar(title_text, ypos, state, screen):
 def draw_job(earn_button):
     global money
     # render text
-    score_text = big_font.render(f"{money}", True, (0, 0, 0))
-    income_text = extra_small_font.render(f"Income: +{income}", True, (0, 0, 0))
+    score_text = BIG_FONT.render(f"{money}", True, (0, 0, 0))
+    income_text = EXTRA_SMALL_FONT.render(f"Income: +{income}", True, (0, 0, 0))
 
     # draw
     screen.blit(
@@ -147,7 +207,7 @@ def draw_job(earn_button):
         ),
     )
     screen.blit(score_text, (WIDTH / 2 - score_text.get_width() / 2, HEIGHT / 4))
-    earn_button.update("Earn")
+    earn_button.update("Earn", MEDIUM_FONT)
     screen.blit(
         income_text,
         (
@@ -176,7 +236,7 @@ def draw_casino(bet_button, numbers, betting, amount, win_loss_text):
         )
     # draw numbers
     for i, number in enumerate(numbers):
-        number_text = big_font.render(number, True, (0, 0, 0))
+        number_text = BIG_FONT.render(number, True, (0, 0, 0))
         screen.blit(
             number_text,
             (
@@ -185,11 +245,11 @@ def draw_casino(bet_button, numbers, betting, amount, win_loss_text):
             ),
         )
     # draw buttons
-    bet_button.update("Bet")
+    bet_button.update("Bet", MEDIUM_FONT)
 
     # enter money amount
-    amount_text = medium_font.render(amount, True, (0, 0, 0))
-    win_loss = extra_small_font.render(win_loss_text, True, (0, 0, 0))
+    amount_text = MEDIUM_FONT.render(amount, True, (0, 0, 0))
+    win_loss = EXTRA_SMALL_FONT.render(win_loss_text, True, (0, 0, 0))
     screen.blit(
         amount_text,
         (
@@ -230,18 +290,30 @@ def main():
     bet_timer = 0
     bet_amount = "100"
     win_loss_text = "make a bet!"
+    egg_price = 100
+    buying_egg = False
+
     # objects
     earn_button = Button(
         WIDTH / 2 - base_button_img.get_width() / 2,
         HEIGHT / 2,
         base_button_img,
-        base_button_img,
+        base_button_hover_img,
+        True,
     )
     bet_button = Button(
         WIDTH / 2 - base_button_img.get_width() / 2,
         HEIGHT / 2,
         base_button_img,
+        base_button_hover_img,
+        False,
+    )
+    buy_egg_button = Button(
+        WIDTH / 2 - base_button_img.get_width() / 2,
+        HEIGHT / 1.7,
         base_button_img,
+        base_button_hover_img,
+        False,
     )
     # main loop
     while run:
@@ -271,10 +343,11 @@ def main():
             )
             betting = betting_numbers[0]
             numbers = betting_numbers[1]
-
+        if state == "Shop":
+            buying_egg = draw_shop(buy_egg_button, egg_price, money)
         if betting:
             bet_timer += 0.010
-        if bet_timer > 2:
+        if bet_timer > 1:
             betting = False
             bet_timer = 0
             unique_numbers = set(numbers)
@@ -291,6 +364,8 @@ def main():
                 money -= int(bet_amount)
                 win_loss_text = "Oopsies. Try again. Sorry!"
 
+        if buying_egg:
+            money -= egg_price
         # draw tpo bar
         state = draw_text_bar(TITLE_TEXT, 55, state, screen)
 
