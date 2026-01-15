@@ -44,6 +44,18 @@ base_button_hover_img = pygame.image.load(
 loot_table = pygame.image.load(os.path.join("assets", "loot_table.png"))
 loot_table = pygame.transform.scale(loot_table, (WIDTH, loot_table.get_height()))
 
+egg_rarities = ["rare", "super_rare", "epic", "mythic", "legendary", "chromatic"]
+egg_imgs = []
+egg_imgs_back = []
+for egg in egg_rarities:
+    egg_imgs.append(pygame.image.load(os.path.join("assets", "eggs", f"{egg}.svg")))
+    egg_imgs_back.append(
+        pygame.transform.scale(
+            pygame.image.load(os.path.join("assets", "eggs", f"{egg}_backdrop.svg")),
+            (WIDTH, HEIGHT),
+        )
+    )
+
 
 # class
 class Button:
@@ -110,6 +122,38 @@ class Button:
 
     def is_clicked(self):
         return self.clicked
+
+
+def draw_egg_opening(rarity_num, chances_left):
+    screen.blit(egg_imgs_back[rarity_num], (0, 0))
+    screen.blit(
+        egg_imgs[rarity_num],
+        (
+            WIDTH / 2 - egg_imgs[rarity_num].get_width() / 2,
+            HEIGHT / 2 - egg_imgs[rarity_num].get_height() / 2,
+        ),
+    )
+    rarity = egg_rarities[rarity_num].upper()
+    egg_rarity_text = BIG_FONT.render(f"{rarity.replace("_", " ")}", True, (0, 0, 0))
+    screen.blit(egg_rarity_text, (WIDTH / 2 - egg_rarity_text.get_width() / 2, 100))
+
+    full_width = egg_imgs[rarity_num].get_width() + 15 * chances_left
+    for i in range(0, chances_left - 1):
+
+        tiny_img = pygame.transform.scale(egg_imgs[rarity_num], (50, 50))
+        screen.blit(
+            tiny_img,
+            (
+                WIDTH - (tiny_img.get_width() + 15) * i - full_width / 2 - 15,
+                HEIGHT - 100,
+            ),
+        )
+
+    if chances_left == 1:
+        tap_to_open = MEDIUM_FONT.render(f"TAP TO OPEN", True, (0, 0, 0))
+        screen.blit(
+            tap_to_open, (WIDTH / 2 - tap_to_open.get_width() / 2, HEIGHT - 100)
+        )
 
 
 def draw_shop(buy_egg_button: Button, egg_price, money):
@@ -278,7 +322,8 @@ def main():
     win_loss_text = "make a bet!"
     egg_price = 100
     buying_egg = False
-
+    rarity_num = 0
+    open_chances = 6
     # objects
     earn_button = Button(
         WIDTH / 2 - base_button_img.get_width() / 2,
@@ -311,6 +356,11 @@ def main():
                 pygame.quit()
                 quit()
 
+            if state == "Egg Open":
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if random.randint(0, 100) < 51:
+                        rarity_num += 1
+                    open_chances -= 1
             if event.type == pygame.TEXTINPUT:
 
                 if event.text in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
@@ -331,6 +381,9 @@ def main():
             numbers = betting_numbers[1]
         if state == "Shop":
             buying_egg = draw_shop(buy_egg_button, egg_price, money)
+        if state == "Egg Open":
+            draw_egg_opening(rarity_num, open_chances)
+            buying_egg = False
         if betting:
             bet_timer += 0.010
         if bet_timer > 1:
@@ -351,11 +404,18 @@ def main():
                 win_loss_text = "Oopsies. Try again. Sorry!"
 
         if buying_egg:
+            state = "Egg Open"
             money -= egg_price
             egg_price *= 2
-        # draw tpo bar
-        state = draw_text_bar(TITLE_TEXT, 55, state, screen)
 
+        if not state == "Egg Open":
+            # draw tpo bar
+            state = draw_text_bar(TITLE_TEXT, 55, state, screen)
+
+        if open_chances == 0:
+            state = "Shop"
+            open_chances = 5
+            rarity_num = 0
         # update
         pygame.display.update()
         clock.tick(FPS)
