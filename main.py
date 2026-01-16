@@ -45,17 +45,25 @@ base_button_hover_img = pygame.image.load(
 loot_table = pygame.image.load(os.path.join("assets", "loot_table.png"))
 loot_table = pygame.transform.scale(loot_table, (WIDTH, loot_table.get_height()))
 
-egg_rarities = ["rare", "super_rare", "epic", "mythic", "legendary", "chromatic"]
+RARITIES = ["rare", "super_rare", "epic", "mythic", "legendary", "chromatic"]
 egg_imgs = []
 egg_imgs_back = []
-for egg in egg_rarities:
-    egg_imgs.append(pygame.image.load(os.path.join("assets", "eggs", f"{egg}.svg")))
+blob_imgs = []
+for rarity in RARITIES:
+    egg_imgs.append(pygame.image.load(os.path.join("assets", "eggs", f"{rarity}.svg")))
     egg_imgs_back.append(
         pygame.transform.scale(
-            pygame.image.load(os.path.join("assets", "eggs", f"{egg}_backdrop.svg")),
+            pygame.image.load(os.path.join("assets", "eggs", f"{rarity}_backdrop.svg")),
             (WIDTH, HEIGHT),
         )
     )
+
+for rarity in RARITIES:
+    blob_imgs.append(
+        pygame.image.load(os.path.join("assets", "blobs", f"{rarity}_blob.svg"))
+    )
+
+    print(f"{rarity}_blob.svg")
 
 
 # class
@@ -125,6 +133,26 @@ class Button:
         return self.clicked
 
 
+class Blob:
+    def __init__(self, rarity_num, blob_imgs):
+        self.rarity_num = rarity_num
+        self.img = blob_imgs[rarity_num]
+        self.x = WIDTH / 2 - self.img.get_width() / 2
+        self.y = HEIGHT - self.img.get_height()
+        self.side = 1
+
+    def draw(self):
+        screen.blit(self.img, (self.x, self.y))
+
+    def move(self):
+        self.x += self.side
+
+        if self.x < 0:
+            self.side = self.side * -1
+        elif self.x > WIDTH - self.img.get_width():
+            self.side = self.side * -1
+
+
 def draw_egg_opening(rarity_num, chances_left):
     screen.blit(egg_imgs_back[rarity_num], (0, 0))
     screen.blit(
@@ -134,18 +162,18 @@ def draw_egg_opening(rarity_num, chances_left):
             HEIGHT / 2 - egg_imgs[rarity_num].get_height() / 2,
         ),
     )
-    rarity = egg_rarities[rarity_num].upper()
+    rarity = RARITIES[rarity_num].upper()
     egg_rarity_text = BIG_FONT.render(f"{rarity.replace("_", " ")}", True, (0, 0, 0))
     screen.blit(egg_rarity_text, (WIDTH / 2 - egg_rarity_text.get_width() / 2, 100))
-
-    full_width = egg_imgs[rarity_num].get_width() + 15 * chances_left
+    tiny_img = pygame.transform.scale(egg_imgs[1], (60, 80))
+    full_width = (tiny_img.get_width() + 15) * 5
     for i in range(0, chances_left - 1):
 
-        tiny_img = pygame.transform.scale(egg_imgs[rarity_num], (50, 50))
+        tiny_img = pygame.transform.scale(egg_imgs[rarity_num], (60, 80))
         screen.blit(
             tiny_img,
             (
-                WIDTH - (tiny_img.get_width() + 15) * i - full_width / 2 - 15,
+                ((WIDTH / 2 - full_width / 2) + ((tiny_img.get_width() + 15)) * i),
                 HEIGHT - 100,
             ),
         )
@@ -223,7 +251,7 @@ def draw_text_bar(title_text, ypos, state, screen):
     return new_state
 
 
-def draw_job(earn_button):
+def draw_job(earn_button, blobs):
     global money
     # render text
     score_text = BIG_FONT.render(f"{money}", True, (0, 0, 0))
@@ -252,6 +280,12 @@ def draw_job(earn_button):
     # check for button click
     if earn_button.is_clicked():
         money += income
+
+    # draw blobs
+
+    for blob in blobs:
+        blob.draw()
+        blob.move()
 
 
 def draw_casino(bet_button, numbers, betting, amount, win_loss_text):
@@ -325,6 +359,8 @@ def main():
     buying_egg = False
     rarity_num = 0
     open_chances = 6
+    blobs = []
+
     # objects
     earn_button = Button(
         WIDTH / 2 - base_button_img.get_width() / 2,
@@ -360,11 +396,13 @@ def main():
 
             if state == "Egg Open":
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if eggs_since_good_reward > 5:
-                        rarity_num += 1
-                    elif random.randint(0, 100) < 51:
-                        rarity_num += 1
+                    if open_chances > 1:
+                        if eggs_since_good_reward > 8:
+                            rarity_num += 1
+                        elif random.randint(0, 100) < 51:
+                            rarity_num += 1
                     open_chances -= 1
+
             if event.type == pygame.TEXTINPUT:
 
                 if event.text in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
@@ -373,22 +411,25 @@ def main():
                 if event.key == pygame.K_BACKSPACE:
                     bet_amount = bet_amount[:-1]
         if open_chances == 0:
-
-            if rarity_num < 5:
+            final_egg_rarity = rarity_num
+            if final_egg_rarity < 5:
                 eggs_since_good_reward += 1
             else:
                 eggs_since_good_reward = 0
-            if rarity_num > 0:
-                income += income_rarity[rarity_num - 1]
+            if final_egg_rarity > 0:
+                income += income_rarity[final_egg_rarity - 1]
             else:
-                income += income_rarity[rarity_num]
+                income += income_rarity[final_egg_rarity]
+
+            blobs.append(Blob(final_egg_rarity, blob_imgs))
             state = "Shop"
             open_chances = 6
             rarity_num = 0
+
         # draw
         screen.fill(WHITE)
         if state == "Job":
-            draw_job(earn_button)
+            draw_job(earn_button, blobs)
         if state == "Casino":
             betting_numbers = draw_casino(
                 bet_button, numbers, betting, bet_amount, win_loss_text
