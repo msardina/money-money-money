@@ -68,8 +68,9 @@ for rarity in RARITIES:
     )
 
 for rarity in RARITIES:
+    img = pygame.image.load(os.path.join("assets", "blobs", f"{rarity}_blob.svg"))
     blob_imgs.append(
-        pygame.image.load(os.path.join("assets", "blobs", f"{rarity}_blob.svg"))
+        pygame.transform.scale(img, (img.get_width() * 1, img.get_height() * 1))
     )
 
 
@@ -439,7 +440,7 @@ def main():
                     if open_chances > 1:
                         if eggs_since_good_reward > 8:
                             rarity_num += 1
-                        elif random.randint(0, 100) < 51:
+                        elif random.randint(0, 100) < 25:
                             rarity_num += 1
                     open_chances -= 1
             if event.type == pygame.TEXTINPUT:
