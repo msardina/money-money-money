@@ -3,10 +3,14 @@ from pygame import mixer
 import os
 import time
 import random
+import math
 
 pygame.init()
 mixer.init()
-
+# sounds
+click_sfx = pygame.mixer.Sound(os.path.join("sounds", "click.wav"))
+lofi = pygame.mixer.Sound(os.path.join("sounds", "lofi_music.mp3"))
+lofi.play(-1)
 # begin
 money = 0
 income = 1
@@ -22,7 +26,8 @@ TITLE_TEXT = [
 ]
 
 # income dic
-income_rarity = {0: 1, 1: 3, 2: 50, 3: 100, 4: 500, 5: 1000, 6: 10000}
+INCOME_RARITY = {0: 1, 1: 3, 2: 50, 3: 100, 4: 500, 5: 1000}
+RARITY_BOUNCE = {0: 20, 1: 50, 2: 1000, 3: 10000, 4: 100000, 5: 1000000}
 # colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -49,6 +54,7 @@ RARITIES = ["rare", "super_rare", "epic", "mythic", "legendary", "chromatic"]
 egg_imgs = []
 egg_imgs_back = []
 blob_imgs = []
+card_imgs = []
 for rarity in RARITIES:
     egg_imgs.append(pygame.image.load(os.path.join("assets", "eggs", f"{rarity}.svg")))
     egg_imgs_back.append(
@@ -57,13 +63,14 @@ for rarity in RARITIES:
             (WIDTH, HEIGHT),
         )
     )
+    card_imgs.append(
+        pygame.image.load(os.path.join("assets", "cards", f"{rarity}_card.png"))
+    )
 
 for rarity in RARITIES:
     blob_imgs.append(
         pygame.image.load(os.path.join("assets", "blobs", f"{rarity}_blob.svg"))
     )
-
-    print(f"{rarity}_blob.svg")
 
 
 # class
@@ -137,7 +144,7 @@ class Blob:
     def __init__(self, rarity_num, blob_imgs):
         self.rarity_num = rarity_num
         self.img = blob_imgs[rarity_num]
-        self.x = WIDTH / 2 - self.img.get_width() / 2
+        self.x = random.randint(0, WIDTH - self.img.get_width())
         self.y = HEIGHT - self.img.get_height()
         self.side = 1
 
@@ -145,12 +152,18 @@ class Blob:
         screen.blit(self.img, (self.x, self.y))
 
     def move(self):
+        bounce = False
         self.x += self.side
 
         if self.x < 0:
             self.side = self.side * -1
+            bounce = True
+
         elif self.x > WIDTH - self.img.get_width():
             self.side = self.side * -1
+            bounce = True
+
+        return bounce
 
 
 def draw_egg_opening(rarity_num, chances_left):
@@ -251,12 +264,16 @@ def draw_text_bar(title_text, ypos, state, screen):
     return new_state
 
 
-def draw_job(earn_button, blobs):
+def draw_job(earn_button, blobs, boost_button, boost_price):
     global money
+    global income
     # render text
     score_text = BIG_FONT.render(f"{money}", True, (0, 0, 0))
+    boost_price_txt = EXTRA_SMALL_FONT.render(f"${boost_price}", True, (0, 0, 0))
     income_text = EXTRA_SMALL_FONT.render(f"Income: +{income}", True, (0, 0, 0))
 
+    # bought
+    bought = False
     # draw
     screen.blit(
         dollar_img,
@@ -276,16 +293,29 @@ def draw_job(earn_button, blobs):
             earn_button.y + base_button_img.get_height(),
         ),
     )
-
+    screen.blit(
+        boost_price_txt,
+        (
+            WIDTH / 2 - boost_price_txt.get_width() / 2,
+            boost_button.y + base_button_img.get_height() + 5,
+        ),
+    )
+    boost_button.update("+income 20%", EXTRA_SMALL_FONT)
     # check for button click
     if earn_button.is_clicked():
         money += income
-
+    if boost_button.is_clicked() and money > boost_price:
+        income += income / 20
+        income = math.ceil(income)
+        bought = True
     # draw blobs
 
     for blob in blobs:
         blob.draw()
-        blob.move()
+        if blob.move():
+            money += RARITY_BOUNCE[blob.rarity_num]
+
+    return bought
 
 
 def draw_casino(bet_button, numbers, betting, amount, win_loss_text):
@@ -360,7 +390,7 @@ def main():
     rarity_num = 0
     open_chances = 6
     blobs = []
-
+    boost_price = 100
     # objects
     earn_button = Button(
         WIDTH / 2 - base_button_img.get_width() / 2,
@@ -383,6 +413,13 @@ def main():
         base_button_hover_img,
         False,
     )
+    boost_button = Button(
+        WIDTH / 2 - base_button_img.get_width() / 2,
+        HEIGHT / 1.5,
+        base_button_img,
+        base_button_hover_img,
+        False,
+    )
     eggs_since_good_reward = 0
     # main loop
     while run:
@@ -394,6 +431,9 @@ def main():
                 pygame.quit()
                 quit()
 
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                click_sfx.play()
+
             if state == "Egg Open":
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if open_chances > 1:
@@ -402,24 +442,29 @@ def main():
                         elif random.randint(0, 100) < 51:
                             rarity_num += 1
                     open_chances -= 1
-
             if event.type == pygame.TEXTINPUT:
-
                 if event.text in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
                     bet_amount += event.text
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_BACKSPACE:
                     bet_amount = bet_amount[:-1]
         if open_chances == 0:
+            screen.blit(egg_imgs_back[rarity_num], (0, 0))
+            screen.blit(
+                card_imgs[rarity_num],
+                (
+                    WIDTH / 2 - card_imgs[rarity_num].get_width() / 2,
+                    HEIGHT / 2 - card_imgs[rarity_num].get_height() / 2,
+                ),
+            )
+            pygame.display.update()
+            time.sleep(2)
             final_egg_rarity = rarity_num
             if final_egg_rarity < 5:
                 eggs_since_good_reward += 1
             else:
                 eggs_since_good_reward = 0
-            if final_egg_rarity > 0:
-                income += income_rarity[final_egg_rarity - 1]
-            else:
-                income += income_rarity[final_egg_rarity]
+            income += INCOME_RARITY[final_egg_rarity]
 
             blobs.append(Blob(final_egg_rarity, blob_imgs))
             state = "Shop"
@@ -429,7 +474,26 @@ def main():
         # draw
         screen.fill(WHITE)
         if state == "Job":
-            draw_job(earn_button, blobs)
+            if draw_job(
+                earn_button, blobs, boost_button, boost_price
+            ):  # run job draw and check if income boost button pressed
+                money -= boost_price
+
+                # increase price of income boost
+                if boost_price < 101:
+                    boost_price *= 4
+                elif boost_price < 5000:
+                    boost_price *= 3
+                elif boost_price < 10000:
+                    boost_price *= 2
+                elif boost_price < 1000000:
+                    boost_price *= 1.2
+                elif boost_price < 10000000:
+                    boost_price *= 1.1
+                else:
+                    boost_price = boost_price
+
+                boost_price = round(boost_price)
         if state == "Casino":
             betting_numbers = draw_casino(
                 bet_button, numbers, betting, bet_amount, win_loss_text
@@ -457,6 +521,9 @@ def main():
                 money += int(bet_amount) * 21
                 win_loss_text = "ARE U HACKING? x21"
             else:
+
+                if bet_amount == "":
+                    bet_amount = "0"
                 money -= int(bet_amount)
                 win_loss_text = "Oopsies. Try again. Sorry!"
 
@@ -465,9 +532,9 @@ def main():
             money -= egg_price
 
             if egg_price < 10000:
-                egg_price *= 4
+                egg_price *= 8
             elif egg_price < 10000000:
-                egg_price *= 2
+                egg_price *= 4
             elif egg_price < 100000000:
                 egg_price = round(egg_price * 1.2)
             else:
