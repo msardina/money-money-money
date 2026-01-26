@@ -7,6 +7,31 @@ import math
 
 pygame.init()
 mixer.init()
+
+print("Hi your new here!")
+create_account = input("Create account? y/n ")
+
+if create_account.lower() == "y":
+    print("Great!")
+    username = input("username: ")
+
+    for i in range(0, 20):
+        print("Creating account")
+        time.sleep(0.05)
+    for i in range(0, 20):
+        print("Initilizing save data")
+        time.sleep(0.05)
+    for i in range(0, 10):
+        print("Almost there!")
+        time.sleep(0.1)
+
+    print(f"Success! Data will save at (account : {username}")
+    time.sleep(2)
+
+    for i in range(1, 1000):
+        print("")
+else:
+    print("Okay! Data will not save.")
 # sounds
 click_sfx = pygame.mixer.Sound(os.path.join("sounds", "click.wav"))
 chaching_sfx = pygame.mixer.Sound(os.path.join("sounds", "chaching.wav"))
@@ -162,13 +187,14 @@ class Blob:
         self.x += self.side
         self.y = screen_height - self.img.get_height()
         if self.x < 0:
-            self.side = self.side * -1
+            self.side = 1
             bounce = True
+            self.x = 0
 
         elif self.x > screen_width - self.img.get_width():
-            self.side = self.side * -1
+            self.side = -1
             bounce = True
-
+            self.x = screen_width - self.img.get_width()
         return bounce
 
 
