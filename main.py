@@ -489,7 +489,7 @@ def main():
                     boost_price *= 4
                 elif boost_price < 5000:
                     boost_price *= 3
-                elif boost_price < 10000:
+                else:
                     boost_price *= 2
 
                 boost_price = round(boost_price)
