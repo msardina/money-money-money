@@ -156,10 +156,10 @@ class Blob:
     def draw(self):
         screen.blit(self.img, (self.x, self.y))
 
-    def move(self):
+    def move(self, screen_height):
         bounce = False
         self.x += self.side
-
+        self.y = screen_height - self.img.get_height()
         if self.x < 0:
             self.side = self.side * -1
             bounce = True
@@ -382,7 +382,7 @@ def draw_job(
 
     for blob in blobs:
         blob.draw()
-        if blob.move():
+        if blob.move(screen_height):
             money += RARITY_BOUNCE[blob.rarity_num]
 
     return bought
