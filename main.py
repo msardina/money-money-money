@@ -301,12 +301,16 @@ def draw_job(earn_button, blobs, boost_button, boost_price):
             boost_button.y + base_button_img.get_height() + 5,
         ),
     )
-    boost_button.update("+income 20%", EXTRA_SMALL_FONT)
+    if money > boost_price:
+        boost_button.update("Go to school", EXTRA_SMALL_FONT)
+    else:
+        boost_button.update("cannot afford", EXTRA_SMALL_FONT)
     # check for button click
     if earn_button.is_clicked():
         money += income
+
     if boost_button.is_clicked() and money > boost_price:
-        income += income / 20
+        income *= 1.4
         income = math.ceil(income)
         bought = True
     # draw blobs
@@ -487,12 +491,6 @@ def main():
                     boost_price *= 3
                 elif boost_price < 10000:
                     boost_price *= 2
-                elif boost_price < 1000000:
-                    boost_price *= 1.2
-                elif boost_price < 10000000:
-                    boost_price *= 1.1
-                else:
-                    boost_price = boost_price
 
                 boost_price = round(boost_price)
         if state == "Casino":
