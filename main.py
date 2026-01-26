@@ -9,6 +9,7 @@ pygame.init()
 mixer.init()
 # sounds
 click_sfx = pygame.mixer.Sound(os.path.join("sounds", "click.wav"))
+chaching_sfx = pygame.mixer.Sound(os.path.join("sounds", "chaching.wav"))
 lofi = pygame.mixer.Sound(os.path.join("sounds", "lofi_music.mp3"))
 lofi.play(-1)
 # begin
@@ -257,6 +258,7 @@ def draw_shop(buy_egg_button: Button, egg_price, money, screen_width, screen_hei
             screen_height / 1.7,
         )
         if buy_egg_button.is_clicked():
+            chaching_sfx.play()
             return True
         else:
             return False
@@ -378,6 +380,7 @@ def draw_job(
         income *= 1.4
         income = math.ceil(income)
         bought = True
+        chaching_sfx.play()
     # draw blobs
 
     for blob in blobs:
@@ -444,6 +447,7 @@ def draw_casino(
     # random bet
 
     if bet_button.is_clicked() and not betting:
+        chaching_sfx.play()
         betting = True
     if betting:
         for i in range(0, len(numbers)):
