@@ -36,8 +36,9 @@ clock = pygame.time.Clock()
 FPS = 60
 
 # setup screen
-WIDTH, HEIGHT = 500, 800
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+og_width, og_height = 500, 800
+screen_width, screen_height = og_width, og_height
+screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
 pygame.display.set_caption("MONEY MONEY MONEY")
 
 # load images
@@ -48,7 +49,7 @@ base_button_hover_img = pygame.image.load(
     os.path.join("assets", "base_button_hover.svg")
 )
 loot_table = pygame.image.load(os.path.join("assets", "loot_table.png"))
-loot_table = pygame.transform.scale(loot_table, (WIDTH, loot_table.get_height()))
+loot_table = pygame.transform.scale(loot_table, (screen_width, loot_table.get_height()))
 
 RARITIES = ["rare", "super_rare", "epic", "mythic", "legendary", "chromatic"]
 egg_imgs = []
@@ -60,7 +61,7 @@ for rarity in RARITIES:
     egg_imgs_back.append(
         pygame.transform.scale(
             pygame.image.load(os.path.join("assets", "eggs", f"{rarity}_backdrop.svg")),
-            (WIDTH, HEIGHT),
+            (screen_width, screen_height),
         )
     )
     card_imgs.append(
@@ -113,7 +114,10 @@ class Button:
                 not self.enabled and (not self.hovering or not pressed)
             ) or (self.enabled and not (self.hovering and pressed))
 
-    def update(self, text, size_font):
+    def update(self, text, size_font, x, y):
+        self.x = x
+        self.y = y
+
         # status
         self.update_status()
         self.text = text
@@ -145,8 +149,8 @@ class Blob:
     def __init__(self, rarity_num, blob_imgs):
         self.rarity_num = rarity_num
         self.img = blob_imgs[rarity_num]
-        self.x = random.randint(0, WIDTH - self.img.get_width())
-        self.y = HEIGHT - self.img.get_height()
+        self.x = random.randint(0, screen_width - self.img.get_width())
+        self.y = screen_height - self.img.get_height()
         self.side = 1
 
     def draw(self):
@@ -160,7 +164,7 @@ class Blob:
             self.side = self.side * -1
             bounce = True
 
-        elif self.x > WIDTH - self.img.get_width():
+        elif self.x > screen_width - self.img.get_width():
             self.side = self.side * -1
             bounce = True
 
@@ -168,17 +172,31 @@ class Blob:
 
 
 def draw_egg_opening(rarity_num, chances_left):
+    global egg_imgs_back
+    # resize loot table
+    egg_imgs_back = []
+    for rarity in RARITIES:
+        egg_imgs_back.append(
+            pygame.transform.scale(
+                pygame.image.load(
+                    os.path.join("assets", "eggs", f"{rarity}_backdrop.svg")
+                ),
+                (screen_width, screen_height),
+            )
+        )
     screen.blit(egg_imgs_back[rarity_num], (0, 0))
     screen.blit(
         egg_imgs[rarity_num],
         (
-            WIDTH / 2 - egg_imgs[rarity_num].get_width() / 2,
-            HEIGHT / 2 - egg_imgs[rarity_num].get_height() / 2,
+            screen_width / 2 - egg_imgs[rarity_num].get_width() / 2,
+            screen_height / 2 - egg_imgs[rarity_num].get_height() / 2,
         ),
     )
     rarity = RARITIES[rarity_num].upper()
     egg_rarity_text = BIG_FONT.render(f"{rarity.replace("_", " ")}", True, (0, 0, 0))
-    screen.blit(egg_rarity_text, (WIDTH / 2 - egg_rarity_text.get_width() / 2, 100))
+    screen.blit(
+        egg_rarity_text, (screen_width / 2 - egg_rarity_text.get_width() / 2, 100)
+    )
     tiny_img = pygame.transform.scale(egg_imgs[1], (60, 80))
     full_width = (tiny_img.get_width() + 15) * 5
     for i in range(0, chances_left - 1):
@@ -187,55 +205,83 @@ def draw_egg_opening(rarity_num, chances_left):
         screen.blit(
             tiny_img,
             (
-                ((WIDTH / 2 - full_width / 2) + ((tiny_img.get_width() + 15)) * i),
-                HEIGHT - 100,
+                (
+                    (screen_width / 2 - full_width / 2)
+                    + ((tiny_img.get_width() + 15)) * i
+                ),
+                screen_height - 100,
             ),
         )
 
     if chances_left == 1:
         tap_to_open = MEDIUM_FONT.render(f"TAP TO OPEN", True, (0, 0, 0))
         screen.blit(
-            tap_to_open, (WIDTH / 2 - tap_to_open.get_width() / 2, HEIGHT - 100)
+            tap_to_open,
+            (screen_width / 2 - tap_to_open.get_width() / 2, screen_height - 100),
         )
 
 
-def draw_shop(buy_egg_button: Button, egg_price, money):
+def draw_shop(buy_egg_button: Button, egg_price, money, screen_width, screen_height):
+
     # draw buy egg
     egg_price_text = MEDIUM_FONT.render(f"{egg_price}", True, (0, 0, 0))
-    screen.blit(egg_price_text, (WIDTH / 2 - egg_price_text.get_width() / 2, 90))
-    screen.blit(loot_table, (0, HEIGHT - loot_table.get_height()))
+    screen.blit(egg_price_text, (screen_width / 2 - egg_price_text.get_width() / 2, 90))
+    screen.blit(
+        loot_table,
+        (
+            screen_width / 2 - loot_table.get_width() / 2,
+            screen_height - loot_table.get_height(),
+        ),
+    )
     # draw egg
     screen.blit(
         shop_egg,
         (
-            WIDTH / 2 - shop_egg.get_width() / 2,
-            HEIGHT / 2 - shop_egg.get_height() / 2 - 100,
+            screen_width / 2 - shop_egg.get_width() / 2,
+            screen_height / 2 - shop_egg.get_height() / 2 - 100,
         ),
     )
     screen.blit(
         dollar_img,
-        (WIDTH / 2 - egg_price_text.get_width() / 2 - dollar_img.get_width(), 100),
+        (
+            screen_width / 2 - egg_price_text.get_width() / 2 - dollar_img.get_width(),
+            100,
+        ),
     )
 
     if egg_price <= money:
-        buy_egg_button.update("buy", MEDIUM_FONT)
+        buy_egg_button.update(
+            "buy",
+            MEDIUM_FONT,
+            screen_width / 2 - base_button_img.get_width() / 2,
+            screen_height / 1.7,
+        )
         if buy_egg_button.is_clicked():
             return True
         else:
             return False
     else:
-        buy_egg_button.update("cant afford", EXTRA_SMALL_FONT)
+        buy_egg_button.update(
+            "cant afford",
+            EXTRA_SMALL_FONT,
+            screen_width / 2 - base_button_img.get_width() / 2,
+            screen_height / 1.7,
+        )
         return False
 
 
 def draw_text_bar(title_text, ypos, state, screen):
     # boarder
-    pygame.draw.line(screen, BLACK, (0, 0), (0, HEIGHT), 5)
-    pygame.draw.line(screen, BLACK, (WIDTH - 2.5, 0), (WIDTH - 2.5, HEIGHT), 5)
-    pygame.draw.line(screen, BLACK, (0, HEIGHT - 2.5), (WIDTH, HEIGHT - 2.5), 5)
-    pygame.draw.line(screen, BLACK, (0, 0), (WIDTH, 0), 5)
-    pygame.draw.line(screen, BLACK, (0, ypos), (WIDTH, ypos), 5)
-    block_width = WIDTH / (len(title_text))
+    pygame.draw.line(screen, BLACK, (0, 0), (0, screen_height), 5)
+    pygame.draw.line(
+        screen, BLACK, (screen_width - 2.5, 0), (screen_width - 2.5, screen_height), 5
+    )
+    pygame.draw.line(
+        screen, BLACK, (0, screen_height - 2.5), (screen_width, screen_height - 2.5), 5
+    )
+    pygame.draw.line(screen, BLACK, (0, 0), (screen_width, 0), 5)
+    pygame.draw.line(screen, BLACK, (0, ypos), (screen_width, ypos), 5)
+    block_width = screen_width / (len(title_text))
     new_state = state
     for i, text in enumerate(title_text):
         rect = pygame.Rect(block_width * i, 0, block_width, ypos)
@@ -265,7 +311,9 @@ def draw_text_bar(title_text, ypos, state, screen):
     return new_state
 
 
-def draw_job(earn_button, blobs, boost_button, boost_price):
+def draw_job(
+    earn_button, blobs, boost_button, boost_price, screen_width, screen_height
+):
     global money
     global income
     # render text
@@ -279,12 +327,19 @@ def draw_job(earn_button, blobs, boost_button, boost_price):
     screen.blit(
         dollar_img,
         (
-            WIDTH / 2 - score_text.get_width() / 2 - dollar_img.get_width(),
-            HEIGHT / 4 + 30,
+            screen_width / 2 - score_text.get_width() / 2 - dollar_img.get_width(),
+            screen_height / 4 + 30,
         ),
     )
-    screen.blit(score_text, (WIDTH / 2 - score_text.get_width() / 2, HEIGHT / 4))
-    earn_button.update("Earn", MEDIUM_FONT)
+    screen.blit(
+        score_text, (screen_width / 2 - score_text.get_width() / 2, screen_height / 4)
+    )
+    earn_button.update(
+        "Earn",
+        MEDIUM_FONT,
+        screen_width / 2 - base_button_img.get_width() / 2,
+        screen_height / 2,
+    )
     screen.blit(
         income_text,
         (
@@ -297,14 +352,24 @@ def draw_job(earn_button, blobs, boost_button, boost_price):
     screen.blit(
         boost_price_txt,
         (
-            WIDTH / 2 - boost_price_txt.get_width() / 2,
+            screen_width / 2 - boost_price_txt.get_width() / 2,
             boost_button.y + base_button_img.get_height() + 5,
         ),
     )
     if money > boost_price:
-        boost_button.update("Go to school", EXTRA_SMALL_FONT)
+        boost_button.update(
+            "Go to school",
+            EXTRA_SMALL_FONT,
+            screen_width / 2 - base_button_img.get_width() / 2,
+            screen_height / 1.5,
+        )
     else:
-        boost_button.update("cannot afford", EXTRA_SMALL_FONT)
+        boost_button.update(
+            "cannot afford",
+            EXTRA_SMALL_FONT,
+            screen_width / 2 - base_button_img.get_width() / 2,
+            screen_height / 1.5,
+        )
     # check for button click
     if earn_button.is_clicked():
         money += income
@@ -323,15 +388,19 @@ def draw_job(earn_button, blobs, boost_button, boost_price):
     return bought
 
 
-def draw_casino(bet_button, numbers, betting, amount, win_loss_text):
+def draw_casino(
+    bet_button, numbers, betting, amount, win_loss_text, screen_width, screen_height
+):
 
     # draw boxes
     box_width = 100
-    for i in range(1, 4):
+    full_width = box_width * 3
+    box_start = screen_width / 2 - full_width / 2
+    for i in range(0, 3):
         pygame.draw.rect(
             screen,
             BLACK,
-            (box_width * i, HEIGHT / 4, box_width, box_width),
+            (box_start + box_width * i, screen_height / 4, box_width, box_width),
             5,
         )
     # draw numbers
@@ -340,12 +409,17 @@ def draw_casino(bet_button, numbers, betting, amount, win_loss_text):
         screen.blit(
             number_text,
             (
-                box_width * (i + 1) + box_width / 2 - number_text.get_width() / 2,
-                HEIGHT / 4,
+                (box_start + box_width * i) + number_text.get_width() / 2,
+                screen_height / 4,
             ),
         )
     # draw buttons
-    bet_button.update("Bet", MEDIUM_FONT)
+    bet_button.update(
+        "Bet",
+        MEDIUM_FONT,
+        screen_width / 2 - base_button_img.get_width() / 2,
+        screen_height / 2,
+    )
 
     # enter money amount
     amount_text = MEDIUM_FONT.render(amount, True, (0, 0, 0))
@@ -353,15 +427,15 @@ def draw_casino(bet_button, numbers, betting, amount, win_loss_text):
     screen.blit(
         amount_text,
         (
-            WIDTH / 2 - amount_text.get_width() / 2,
-            HEIGHT / 2 - amount_text.get_height() - 10,
+            screen_width / 2 - amount_text.get_width() / 2,
+            screen_height / 2 - amount_text.get_height() - 10,
         ),
     )
     screen.blit(
         dollar_img,
         (
-            WIDTH / 2 - amount_text.get_width() / 2 - 35,
-            HEIGHT / 2 - amount_text.get_height(),
+            screen_width / 2 - amount_text.get_width() / 2 - 35,
+            screen_height / 2 - amount_text.get_height(),
         ),
     )
     screen.blit(
@@ -385,6 +459,8 @@ def main():
     state = "Job"
     global money
     global income
+    global screen_width
+    global screen_height
     numbers = ["0", "0", "0"]
     betting = False
     bet_timer = 0
@@ -398,29 +474,29 @@ def main():
     boost_price = 100
     # objects
     earn_button = Button(
-        WIDTH / 2 - base_button_img.get_width() / 2,
-        HEIGHT / 2,
+        screen_width / 2 - base_button_img.get_width() / 2,
+        screen_height / 2,
         base_button_img,
         base_button_hover_img,
         True,
     )
     bet_button = Button(
-        WIDTH / 2 - base_button_img.get_width() / 2,
-        HEIGHT / 2,
+        screen_width / 2 - base_button_img.get_width() / 2,
+        screen_height / 2,
         base_button_img,
         base_button_hover_img,
         False,
     )
     buy_egg_button = Button(
-        WIDTH / 2 - base_button_img.get_width() / 2,
-        HEIGHT / 1.7,
+        screen_width / 2 - base_button_img.get_width() / 2,
+        screen_height / 1.7,
         base_button_img,
         base_button_hover_img,
         False,
     )
     boost_button = Button(
-        WIDTH / 2 - base_button_img.get_width() / 2,
-        HEIGHT / 1.5,
+        screen_width / 2 - base_button_img.get_width() / 2,
+        screen_height / 1.5,
         base_button_img,
         base_button_hover_img,
         False,
@@ -429,6 +505,9 @@ def main():
     # main loop
     while run:
 
+        # resize screen
+        screen_width = screen.get_width()
+        screen_height = screen.get_height()
         # loop through events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:  # quit if x button pressed
@@ -458,8 +537,8 @@ def main():
             screen.blit(
                 card_imgs[rarity_num],
                 (
-                    WIDTH / 2 - card_imgs[rarity_num].get_width() / 2,
-                    HEIGHT / 2 - card_imgs[rarity_num].get_height() / 2,
+                    screen_width / 2 - card_imgs[rarity_num].get_width() / 2,
+                    screen_height / 2 - card_imgs[rarity_num].get_height() / 2,
                 ),
             )
             pygame.display.update()
@@ -480,7 +559,12 @@ def main():
         screen.fill(WHITE)
         if state == "Job":
             if draw_job(
-                earn_button, blobs, boost_button, boost_price
+                earn_button,
+                blobs,
+                boost_button,
+                boost_price,
+                screen_width,
+                screen_height,
             ):  # run job draw and check if income boost button pressed
                 money -= boost_price
 
@@ -495,12 +579,20 @@ def main():
                 boost_price = round(boost_price)
         if state == "Casino":
             betting_numbers = draw_casino(
-                bet_button, numbers, betting, bet_amount, win_loss_text
+                bet_button,
+                numbers,
+                betting,
+                bet_amount,
+                win_loss_text,
+                screen_width,
+                screen_height,
             )
             betting = betting_numbers[0]
             numbers = betting_numbers[1]
         if state == "Shop":
-            buying_egg = draw_shop(buy_egg_button, egg_price, money)
+            buying_egg = draw_shop(
+                buy_egg_button, egg_price, money, screen_width, screen_height
+            )
         if state == "Egg Open":
             draw_egg_opening(rarity_num, open_chances)
             buying_egg = False
