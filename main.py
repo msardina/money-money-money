@@ -1,5 +1,6 @@
 import pygame
 from pygame import mixer
+import asyncio
 import os
 import time
 import random
@@ -18,10 +19,10 @@ lofi.play(-1)
 money = 0
 income = 1
 # setup font
-EXTRA_SMALL_FONT = pygame.font.SysFont("comicsans", 20, True)
-SMALL_FONT = pygame.font.SysFont("comicsans", 45, True)
-MEDIUM_FONT = pygame.font.SysFont("comicsans", 50, True)
-BIG_FONT = pygame.font.SysFont("comicsans", 70, True)
+EXTRA_SMALL_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 20, True)
+SMALL_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 45, True)
+MEDIUM_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 50, True)
+BIG_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 70, True)
 
 ALL_BARS = ["Shop", "Job", "Casino"]
 TITLE_TEXT = [
@@ -232,10 +233,12 @@ def draw_egg_opening(rarity_num, chances_left):
 def draw_shop(buy_egg_button: Button, egg_price, money, screen_width, screen_height):
 
     # draw buy egg
-    egg_price_text = MEDIUM_FONT.render(
+    egg_price_text = BIG_FONT.render(
         f"{format_number_commas(egg_price)}", True, (0, 0, 0)
     )
-    screen.blit(egg_price_text, (screen_width / 2 - egg_price_text.get_width() / 2, 90))
+    screen.blit(
+        egg_price_text, (screen_width / 2 - egg_price_text.get_width() / 2, 100)
+    )
     screen.blit(
         loot_table,
         (
@@ -298,7 +301,7 @@ def draw_text_bar(title_text, ypos, state, screen):
         rect = pygame.Rect(block_width * i, 0, block_width, ypos)
         # draw text and line
         screen.blit(
-            text, ((block_width * i + block_width / 2) - text.get_width() / 2, -12)
+            text, ((block_width * i + block_width / 2) - text.get_width() / 2, 10)
         )
         pygame.draw.line(
             screen, BLACK, (block_width * i, 0), (block_width * i, ypos), 5
@@ -345,7 +348,8 @@ def draw_job(
         ),
     )
     screen.blit(
-        score_text, (screen_width / 2 - score_text.get_width() / 2, screen_height / 4)
+        score_text,
+        (screen_width / 2 - score_text.get_width() / 2, screen_height / 4 + 35),
     )
     earn_button.update(
         "Earn",
@@ -423,8 +427,10 @@ def draw_casino(
         screen.blit(
             number_text,
             (
-                (box_start + box_width * i) + number_text.get_width() / 2,
-                screen_height / 4,
+                (box_start + box_width * i)
+                + box_width / 2
+                - number_text.get_width() / 2,
+                screen_height / 4 + box_width / 2 - number_text.get_height() / 2,
             ),
         )
     # draw buttons
@@ -436,20 +442,20 @@ def draw_casino(
     )
 
     # enter money amount
-    amount_text = MEDIUM_FONT.render(format_number_commas(amount), True, (0, 0, 0))
+    amount_text = BIG_FONT.render(format_number_commas(amount), True, (0, 0, 0))
     win_loss = EXTRA_SMALL_FONT.render(win_loss_text, True, (0, 0, 0))
     screen.blit(
         amount_text,
         (
             screen_width / 2 - amount_text.get_width() / 2,
-            screen_height / 2 - amount_text.get_height() - 10,
+            screen_height / 2 - amount_text.get_height() - 35,
         ),
     )
     screen.blit(
         dollar_img,
         (
             screen_width / 2 - amount_text.get_width() / 2 - 35,
-            screen_height / 2 - amount_text.get_height(),
+            screen_height / 2 - amount_text.get_height() - 35,
         ),
     )
     screen.blit(
@@ -468,7 +474,7 @@ def draw_casino(
     return betting, numbers
 
 
-def main():
+async def main():
     # variables
     run = True
     state = "Job"
@@ -521,6 +527,8 @@ def main():
     )
     eggs_since_good_reward = 0
     pity_after_how_many_eggs = 16
+    draw_card_timer = 0
+    draw_card = False
     # main loop
     while run:
 
@@ -553,28 +561,6 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_BACKSPACE:
                     bet_amount = bet_amount[:-1]
-        if open_chances == 0:
-            screen.blit(egg_imgs_back[rarity_num], (0, 0))
-            screen.blit(
-                card_imgs[rarity_num],
-                (
-                    screen_width / 2 - card_imgs[rarity_num].get_width() / 2,
-                    screen_height / 2 - card_imgs[rarity_num].get_height() / 2,
-                ),
-            )
-            pygame.display.update()
-            time.sleep(2)
-            final_egg_rarity = rarity_num
-            if final_egg_rarity < 5:
-                eggs_since_good_reward += 1
-            else:
-                eggs_since_good_reward = 0
-            income += INCOME_RARITY[final_egg_rarity]
-
-            blobs.append(Blob(final_egg_rarity, blob_imgs))
-            state = "Shop"
-            open_chances = 6
-            rarity_num = 0
 
         # draw
         screen.fill(WHITE)
@@ -682,6 +668,36 @@ def main():
             tip_timer = 0
             tip_show = False  # toggle
 
+        if open_chances == 0:
+            draw_card = True
+
+        if draw_card:  # draw card
+            draw_card_timer += 0.16  # update timer
+            screen.blit(egg_imgs_back[rarity_num], (0, 0))
+            screen.blit(
+                card_imgs[rarity_num],
+                (
+                    screen_width / 2 - card_imgs[rarity_num].get_width() / 2,
+                    screen_height / 2 - card_imgs[rarity_num].get_height() / 2,
+                ),
+            )
+
+        if draw_card_timer > 4:  # flick back to not draw card
+            # add pet
+            final_egg_rarity = rarity_num
+            if final_egg_rarity < 5:
+                eggs_since_good_reward += 1
+            else:
+                eggs_since_good_reward = 0
+            income += INCOME_RARITY[final_egg_rarity]
+            blobs.append(Blob(final_egg_rarity, blob_imgs))
+            state = "Shop"
+            open_chances = 6
+            rarity_num = 0
+            draw_card = False
+            draw_card_timer = 0
+        # asyncio wait
+        await asyncio.sleep(0)
         # update
         pygame.display.update()
         clock.tick(FPS)
@@ -690,4 +706,4 @@ def main():
 # run game
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
