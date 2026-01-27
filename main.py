@@ -8,30 +8,7 @@ import math
 pygame.init()
 mixer.init()
 
-print("Hi your new here!")
-create_account = input("Create account? y/n ")
 
-if create_account.lower() == "y":
-    print("Great!")
-    username = input("username: ")
-
-    for i in range(0, 20):
-        print("Creating account")
-        time.sleep(0.05)
-    for i in range(0, 20):
-        print("Initilizing save data")
-        time.sleep(0.05)
-    for i in range(0, 10):
-        print("Almost there!")
-        time.sleep(0.1)
-
-    print(f"Success! Data will save at (account : {username}")
-    time.sleep(2)
-
-    for i in range(1, 1000):
-        print("")
-else:
-    print("Okay! Data will not save.")
 # sounds
 click_sfx = pygame.mixer.Sound(os.path.join("sounds", "click.wav"))
 chaching_sfx = pygame.mixer.Sound(os.path.join("sounds", "chaching.wav"))
@@ -99,6 +76,10 @@ for rarity in RARITIES:
     blob_imgs.append(
         pygame.transform.scale(img, (img.get_width() * 1, img.get_height() * 1))
     )
+
+
+def format_number_commas(num):
+    return "0" if num == "" else "{:,}".format(int(num))
 
 
 # class
@@ -251,7 +232,9 @@ def draw_egg_opening(rarity_num, chances_left):
 def draw_shop(buy_egg_button: Button, egg_price, money, screen_width, screen_height):
 
     # draw buy egg
-    egg_price_text = MEDIUM_FONT.render(f"{egg_price}", True, (0, 0, 0))
+    egg_price_text = MEDIUM_FONT.render(
+        f"{format_number_commas(egg_price)}", True, (0, 0, 0)
+    )
     screen.blit(egg_price_text, (screen_width / 2 - egg_price_text.get_width() / 2, 90))
     screen.blit(
         loot_table,
@@ -345,8 +328,10 @@ def draw_job(
     global money
     global income
     # render text
-    score_text = BIG_FONT.render(f"{money}", True, (0, 0, 0))
-    boost_price_txt = EXTRA_SMALL_FONT.render(f"${boost_price}", True, (0, 0, 0))
+    score_text = BIG_FONT.render(f"{format_number_commas(money)}", True, (0, 0, 0))
+    boost_price_txt = EXTRA_SMALL_FONT.render(
+        f"${format_number_commas(boost_price)}", True, (0, 0, 0)
+    )
     income_text = EXTRA_SMALL_FONT.render(f"Income: +{income}", True, (0, 0, 0))
 
     # bought
@@ -451,7 +436,7 @@ def draw_casino(
     )
 
     # enter money amount
-    amount_text = MEDIUM_FONT.render(amount, True, (0, 0, 0))
+    amount_text = MEDIUM_FONT.render(format_number_commas(amount), True, (0, 0, 0))
     win_loss = EXTRA_SMALL_FONT.render(win_loss_text, True, (0, 0, 0))
     screen.blit(
         amount_text,
