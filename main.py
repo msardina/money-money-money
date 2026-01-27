@@ -258,7 +258,7 @@ def draw_shop(buy_egg_button: Button, egg_price, money, screen_width, screen_hei
         dollar_img,
         (
             screen_width / 2 - egg_price_text.get_width() / 2 - dollar_img.get_width(),
-            100,
+            110,
         ),
     )
 
@@ -326,7 +326,7 @@ def draw_text_bar(title_text, ypos, state, screen):
 
 
 def draw_job(
-    earn_button, blobs, boost_button, boost_price, screen_width, screen_height
+    earn_button, blobs, boost_button, boost_price, screen_width, screen_height, username
 ):
     global money
     global income
@@ -336,6 +336,7 @@ def draw_job(
         f"${format_number_commas(boost_price)}", True, (0, 0, 0)
     )
     income_text = EXTRA_SMALL_FONT.render(f"Income: +{income}", True, (0, 0, 0))
+    username_text = SMALL_FONT.render(username, True, (0, 0, 0))
 
     # bought
     bought = False
@@ -344,7 +345,7 @@ def draw_job(
         dollar_img,
         (
             screen_width / 2 - score_text.get_width() / 2 - dollar_img.get_width(),
-            screen_height / 4 + 30,
+            screen_height / 4 + 45,
         ),
     )
     screen.blit(
@@ -403,7 +404,28 @@ def draw_job(
         if blob.move(screen_height):
             money += RARITY_BOUNCE[blob.rarity_num]
 
+    # draw username
+    screen.blit(
+        username_text,
+        (
+            screen_width - username_text.get_width() - 5,
+            screen_height - username_text.get_height() - 5,
+        ),
+    )
     return bought
+
+
+def username(username):
+    hello_text = SMALL_FONT.render("Create account here!", True, (0, 0, 0))
+    username_text = SMALL_FONT.render(f"username: {username}", True, (0, 0, 0))
+    screen.blit(
+        hello_text,
+        (screen_width / 2 - hello_text.get_width() / 2, screen_height / 2 - 100),
+    )
+    screen.blit(
+        username_text,
+        (screen_width / 2 - username_text.get_width() / 2, screen_height / 2 - 20),
+    )
 
 
 def draw_casino(
@@ -455,7 +477,7 @@ def draw_casino(
         dollar_img,
         (
             screen_width / 2 - amount_text.get_width() / 2 - 35,
-            screen_height / 2 - amount_text.get_height() - 35,
+            screen_height / 2 - amount_text.get_height() - 20,
         ),
     )
     screen.blit(
@@ -477,7 +499,7 @@ def draw_casino(
 async def main():
     # variables
     run = True
-    state = "Job"
+    state = "username"
     global money
     global income
     global screen_width
@@ -529,6 +551,7 @@ async def main():
     pity_after_how_many_eggs = 16
     draw_card_timer = 0
     draw_card = False
+    username_str = ""
     # main loop
     while run:
 
@@ -556,14 +579,25 @@ async def main():
                             rarity_num += 1
                     open_chances -= 1
             if event.type == pygame.TEXTINPUT:
-                if event.text in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
-                    bet_amount += event.text
+                if state == "Casino":
+                    if event.text in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+                        bet_amount += event.text
+
+                if state == "username":
+                    username_str += event.text
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_BACKSPACE:
-                    bet_amount = bet_amount[:-1]
+                if state == "Casino":
+                    if event.key == pygame.K_BACKSPACE:
+                        bet_amount = bet_amount[:-1]
+                if state == "username":
+                    if event.key == pygame.K_BACKSPACE:
+                        username_str = username_str[:-1]
 
         # draw
         screen.fill(WHITE)
+
+        if state == "username":
+            username(username_str)
         if state == "Job":
             if draw_job(
                 earn_button,
@@ -572,6 +606,7 @@ async def main():
                 boost_price,
                 screen_width,
                 screen_height,
+                username_str,
             ):  # run job draw and check if income boost button pressed
                 money -= boost_price
 
@@ -638,7 +673,7 @@ async def main():
             else:
                 egg_price = egg_price
 
-        if not state == "Egg Open":
+        if not state in ["Egg Open", "username"]:
             # draw tpo bar
             state = draw_text_bar(TITLE_TEXT, 55, state, screen)
 
@@ -696,6 +731,11 @@ async def main():
             rarity_num = 0
             draw_card = False
             draw_card_timer = 0
+
+        # end username
+
+        if keys[pygame.K_RETURN]:
+            state = "Job"
         # asyncio wait
         await asyncio.sleep(0)
         # update
