@@ -520,6 +520,7 @@ def main():
         False,
     )
     eggs_since_good_reward = 0
+    pity_after_how_many_eggs = 16
     # main loop
     while run:
 
@@ -539,8 +540,10 @@ def main():
             if state == "Egg Open":
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if open_chances > 1:
-                        if eggs_since_good_reward > 8:
+                        if eggs_since_good_reward > pity_after_how_many_eggs:
                             rarity_num += 1
+                            pity_after_how_many_eggs *= 1.4
+                            pity_after_how_many_eggs = round(pity_after_how_many_eggs)
                         elif random.randint(0, 100) < 25:
                             rarity_num += 1
                     open_chances -= 1
