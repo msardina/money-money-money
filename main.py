@@ -24,7 +24,7 @@ SMALL_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 45, True)
 MEDIUM_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 50, True)
 BIG_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 70, True)
 
-ALL_BARS = ["Shop", "Job", "Casino"]
+ALL_BARS = ["Shop", "Job", "Casino", "Stats"]
 TITLE_TEXT = [
     SMALL_FONT.render(text_content, True, (0, 0, 0)) for text_content in ALL_BARS
 ]
@@ -415,9 +415,20 @@ def draw_job(
     return bought
 
 
-def username(username):
+def username(username, random_num):
     hello_text = SMALL_FONT.render("Create account here!", True, (0, 0, 0))
     username_text = SMALL_FONT.render(f"username: {username}", True, (0, 0, 0))
+    amt_people = EXTRA_SMALL_FONT.render(
+        f"This game has 10293 total plays (24-72 hours to update)", True, (0, 0, 0)
+    )
+
+    if random.randint(1, 120) == 1:
+        random_num += random.randint(-2, 2)
+    rn_people = EXTRA_SMALL_FONT.render(
+        f"{random_num} people currently playing", True, (0, 0, 0)
+    )
+    screen.blit(rn_people, (10, screen_height - rn_people.get_height() * 2 - 20))
+    screen.blit(amt_people, (10, screen_height - amt_people.get_height() - 10))
     screen.blit(
         hello_text,
         (screen_width / 2 - hello_text.get_width() / 2, screen_height / 2 - 100),
@@ -426,6 +437,7 @@ def username(username):
         username_text,
         (screen_width / 2 - username_text.get_width() / 2, screen_height / 2 - 20),
     )
+    return random_num
 
 
 def draw_casino(
@@ -518,6 +530,7 @@ async def main():
     tip_timer = 0
     tip_show = False
     never_r = True
+    current_players = 125
     # objects
     earn_button = Button(
         screen_width / 2 - base_button_img.get_width() / 2,
@@ -597,7 +610,7 @@ async def main():
         screen.fill(WHITE)
 
         if state == "username":
-            username(username_str)
+            current_players = username(username_str, current_players)
         if state == "Job":
             if draw_job(
                 earn_button,
