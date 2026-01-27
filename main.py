@@ -487,6 +487,9 @@ def main():
     open_chances = 6
     blobs = []
     boost_price = 100
+    tip_timer = 0
+    tip_show = False
+    never_r = True
     # objects
     earn_button = Button(
         screen_width / 2 - base_button_img.get_width() / 2,
@@ -649,6 +652,32 @@ def main():
         if not state == "Egg Open":
             # draw tpo bar
             state = draw_text_bar(TITLE_TEXT, 55, state, screen)
+
+        #
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_r]:
+            for blob in blobs:
+                blob.x = random.randint(0, screen_width - blob.img.get_width())
+
+        # update the timer
+
+        if len(blobs) > 4 and never_r:
+            tip_timer += 0.016
+            if tip_timer > 30:  # check if 10 seconds past
+                tip_timer = 0
+                tip_show = True  # toggle
+
+        # draw tip
+        if tip_show and state == "Job":
+            never_r = False
+            tip_text = EXTRA_SMALL_FONT.render(
+                f"Tip: too unbunch your pets press (r)", True, (0, 0, 0)
+            )
+            screen.blit(tip_text, (10, screen_height - 50))
+
+        if tip_show and tip_timer > 2:
+            tip_timer = 0
+            tip_show = False  # toggle
 
         # update
         pygame.display.update()
