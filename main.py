@@ -798,7 +798,7 @@ async def main():
         if money < 1:
             place = TOTAL_PLAYERS
         else:
-            place = round(TOTAL_PLAYERS - (money / 100000))
+            place = round(TOTAL_PLAYERS - (income / 100))
 
         if place < 4:
             place = 4
