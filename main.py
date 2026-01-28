@@ -24,6 +24,7 @@ SMALL_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 45, True)
 MEDIUM_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 50, True)
 BIG_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 70, True)
 
+TOTAL_PLAYERS = 10283
 ALL_BARS = ["Shop", "Job", "Casino", "Stats"]
 TITLE_TEXT = [
     SMALL_FONT.render(text_content, True, (0, 0, 0)) for text_content in ALL_BARS
@@ -417,10 +418,13 @@ def draw_job(
     return bought
 
 
-def draw_stats(username, random_num, join_tournament):
+def draw_stats(username, random_num, join_tournament, place):
     username_text = SMALL_FONT.render(f"{username} (you)", True, (0, 0, 0))
+    place_text = EXTRA_SMALL_FONT.render(f"{place}", True, (0, 0, 0))
     amt_people = EXTRA_SMALL_FONT.render(
-        f"This game has 10293 total plays (24-72 hours to update)", True, (0, 0, 0)
+        f"This game has {TOTAL_PLAYERS} total plays (24-72 hours to update)",
+        True,
+        (0, 0, 0),
     )
 
     if random.randint(1, 120) == 1:
@@ -434,6 +438,7 @@ def draw_stats(username, random_num, join_tournament):
     screen.blit(
         username_text, (screen_width / 2 - leadorboard.get_width() / 2 + 65, 370)
     )
+    screen.blit(place_text, (screen_width / 2 - leadorboard.get_width() / 2 + 5, 370))
     screen.blit(
         tournament, (screen_width / 2 - tournament.get_width() / 2, screen_height - 360)
     )
@@ -450,7 +455,9 @@ def username(username, random_num):
     hello_text = SMALL_FONT.render("Create account here!", True, (0, 0, 0))
     username_text = SMALL_FONT.render(f"username: {username}", True, (0, 0, 0))
     amt_people = EXTRA_SMALL_FONT.render(
-        f"This game has 10293 total plays (24-72 hours to update)", True, (0, 0, 0)
+        f"This game has {TOTAL_PLAYERS} total plays (24-72 hours to update)",
+        True,
+        (0, 0, 0),
     )
 
     if random.randint(1, 120) == 1:
@@ -562,6 +569,7 @@ async def main():
     tip_show = False
     never_r = True
     current_players = 125
+    place = TOTAL_PLAYERS
     # objects
     earn_button = Button(
         screen_width / 2 - base_button_img.get_width() / 2,
@@ -687,7 +695,9 @@ async def main():
                 buy_egg_button, egg_price, money, screen_width, screen_height
             )
         if state == "Stats":
-            current_players = draw_stats(username_str, current_players, join_tournament)
+            current_players = draw_stats(
+                username_str, current_players, join_tournament, place
+            )
         if state == "Egg Open":
             draw_egg_opening(rarity_num, open_chances)
             buying_egg = False
@@ -785,6 +795,13 @@ async def main():
             draw_card = False
             draw_card_timer = 0
 
+        if money < 1:
+            place = TOTAL_PLAYERS
+        else:
+            place = round(TOTAL_PLAYERS - (money / 100000))
+
+        if place < 4:
+            place = 4
         # end username
 
         if keys[pygame.K_RETURN]:
