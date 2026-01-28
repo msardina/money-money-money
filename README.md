@@ -1,9 +1,9 @@
 # MONEY MONEY MONEY 🤑💸💰
 This is a fun sim game where you hatch pets and gain more money!
 
-created by @msardina
-2026 release
-status:ongoing 🥳
+- created by @msardina
+- 2026 release
+- status:ongoing 🥳
 
 PLAY AT https://msardina.github.io/make-money/ 👍
 
