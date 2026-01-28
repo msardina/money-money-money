@@ -24,7 +24,7 @@ SMALL_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 45, True)
 MEDIUM_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 50, True)
 BIG_FONT = pygame.font.SysFont(os.path.join("font", "font.tff"), 70, True)
 
-TOTAL_PLAYERS = 10283
+TOTAL_PLAYERS = 1028
 ALL_BARS = ["Shop", "Job", "Casino", "Stats"]
 TITLE_TEXT = [
     SMALL_FONT.render(text_content, True, (0, 0, 0)) for text_content in ALL_BARS
@@ -568,7 +568,7 @@ async def main():
     tip_timer = 0
     tip_show = False
     never_r = True
-    current_players = 125
+    current_players = 24
     place = TOTAL_PLAYERS
     # objects
     earn_button = Button(
