@@ -46,6 +46,8 @@ screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE
 pygame.display.set_caption("MONEY MONEY MONEY")
 
 # load images
+leadorboard = pygame.image.load(os.path.join("assets", "leadorboard.png"))
+tournament = pygame.image.load(os.path.join("assets", "tournament.png"))
 shop_egg = pygame.image.load(os.path.join("assets", "lucky_egg.svg"))
 dollar_img = pygame.image.load(os.path.join("assets", "dollar.svg"))
 base_button_img = pygame.image.load(os.path.join("assets", "base_button.svg"))
@@ -415,6 +417,35 @@ def draw_job(
     return bought
 
 
+def draw_stats(username, random_num, join_tournament):
+    username_text = SMALL_FONT.render(f"{username} (you)", True, (0, 0, 0))
+    amt_people = EXTRA_SMALL_FONT.render(
+        f"This game has 10293 total plays (24-72 hours to update)", True, (0, 0, 0)
+    )
+
+    if random.randint(1, 120) == 1:
+        random_num += random.randint(-2, 2)
+    rn_people = EXTRA_SMALL_FONT.render(
+        f"{random_num} people currently playing", True, (0, 0, 0)
+    )
+    screen.blit(rn_people, (10, screen_height - rn_people.get_height() * 2 - 20))
+    screen.blit(amt_people, (10, screen_height - amt_people.get_height() - 10))
+    screen.blit(leadorboard, (screen_width / 2 - leadorboard.get_width() / 2, 100))
+    screen.blit(
+        username_text, (screen_width / 2 - leadorboard.get_width() / 2 + 65, 370)
+    )
+    screen.blit(
+        tournament, (screen_width / 2 - tournament.get_width() / 2, screen_height - 360)
+    )
+    join_tournament.update(
+        "join",
+        EXTRA_SMALL_FONT,
+        screen_width / 2 - base_button_img.get_width() / 2,
+        screen_height - 265,
+    )
+    return random_num
+
+
 def username(username, random_num):
     hello_text = SMALL_FONT.render("Create account here!", True, (0, 0, 0))
     username_text = SMALL_FONT.render(f"username: {username}", True, (0, 0, 0))
@@ -546,6 +577,13 @@ async def main():
         base_button_hover_img,
         False,
     )
+    join_tournament = Button(
+        screen_width / 2 - base_button_img.get_width() / 2,
+        screen_height / 2,
+        base_button_img,
+        base_button_hover_img,
+        False,
+    )
     buy_egg_button = Button(
         screen_width / 2 - base_button_img.get_width() / 2,
         screen_height / 1.7,
@@ -648,6 +686,8 @@ async def main():
             buying_egg = draw_shop(
                 buy_egg_button, egg_price, money, screen_width, screen_height
             )
+        if state == "Stats":
+            current_players = draw_stats(username_str, current_players, join_tournament)
         if state == "Egg Open":
             draw_egg_opening(rarity_num, open_chances)
             buying_egg = False
@@ -690,7 +730,7 @@ async def main():
             # draw tpo bar
             state = draw_text_bar(TITLE_TEXT, 55, state, screen)
 
-        #
+        # keys
         keys = pygame.key.get_pressed()
         if keys[pygame.K_r]:
             for blob in blobs:
